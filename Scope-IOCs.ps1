@@ -13,77 +13,56 @@
   Service:                  Determine if a specific service exists
   Local User Account:       Determine if a specific local user account exists
   Registry Key:             Deteremine if a specific regisry key (designated by full path) exists
-
   
 PARAMETERS
 
 Scoping Files
 
   -File
-    Used when specifying that a File scoping will occur when running the script
+    Used to specify the file name that will be searched for when running the script using the Scope-File parameter set
 
-    -FileStartPath
-      Used to specify the starting directory that the script will use to begin searching for a file when using the File parameter
+  -FileStartPath
+    Used to specify the starting directory that the script will use to begin searching for a file when using the Scope-File parameter set
 
-    -FileName
-      Used to specify the file name that will be searched for when running the script using the File parameter
+      
 
 Scoping Directory and File Paths
 
   -Path
-    Used when specifying that a Path scoping will occur when running the script (should be a directory or file path)
-
-    -PathName
-      Specifies the full path that will be tested when running the script using the Path parameter
+    Specifies the full path that will be tested when running the script using the Scope-Path parameter set
+      
 
 Scoping IP Addresses
 
   -IPAddress
-    Used when specifying that an IP address scoping will occur when running the script
+    Used to specify the IP address that will be searched for when running the script using the Scope-IPAddress parameter set
 
-    -Address
-      Used to specify the IP address that will be searched for when running the script using the IPAddress parameter
 
 Scoping Processes
 
   -Process
-    Used when specifying that a Process scoping will occur when running the script
-
-    -ProcessName
-      Used to specify the process name that will be searched for when running the script using the Process parameter
+    Used to specify the process name that will be searched for when running the script using the Scope-Process parameter set      
 
 Scoping Services
 
   -Service
-    Used when specifying that a Service scoping will occur when running the script
-
-    -ServiceName
-      Used to specify the service name that will be searched for when running the script using the Service parameter
-
+    Used to specify the service name that will be searched for when running the script using the Scope-Service parameter set
+      
 Scoping Local User Accounts
   -User
-    Used to specify that a Local User scoping will occur when running the script
-
-    -UserName
-      Used to specify the local user name that will be searched for when running the script using the User parameter
+    Used to specify the local user name that will be searched for when running the script using the Scope-LocalUsers parameter set      
 
 Scoping Registry Keys
 
   -RegKey
-    Used to specify that a Registry Key scoping will occur when running the script
-
-    -FullKeyPath
-      Used to specify the full path to the registry key that will be searched for when running the script using the RegKey parameter
+    Used to specify the full path to the registry key that will be searched for when running the script using the Scope-RegKey parameter set
 
 Host Import Parameters
 
-  -TargetTXTFile
-    Specifies a TXT file containing hostnames that will be imported and used as the base to scope against
-
-  -TargetCSVFile
-    Specifies a CSV file containing hostnames that will be imported and used as the host base to scope against
-    Note: the column header must be ComputerName
-
+  -TargetFile
+    Specifies the text or csv file containing hostnames that will be imported and used as the base to scope against
+    Note: for csv's, the column header must be ComputerName
+  
   -Target
     Specified by the user and will be used as the host base to scope against
 
@@ -104,6 +83,11 @@ Output Parameters
   -OutputDir
     Specifies the location of the output directory that will be created for output
 
+PowerShell Remoting Specific Parameters
+
+  -ThrottleLimit
+    Used to specify the value for ThrottleLimit to use with Invoke-Command. Default is set to use the PS Remoting default of 32
+
 .NOTES
     Updated: 2/14/2019        
     Release Date: 2/14/2019
@@ -114,164 +98,143 @@ Output Parameters
 
 Scope a file with an unknown path against a user specified host
 
-Scope-IOCs.ps1 -File -FileStartPath C:\ -FileName testfile.txt -Target test-PC -OutputDir C:\Tools\Scoping  
+Scope-IOCs.ps1 -File testfile.txt -FileStartPath C:\ -Target test-PC -OutputDir C:\Tools\Scoping  
 
 .EXAMPLE 
 
 Scope a specific path against a host base specified by a CSV file
 
-Scope-IOCs.ps1 -Path -PathName C:\Tools\testfile.txt -TargetCSVFile C:\test\hosts.csv -OutputDir C:\Tools\Scoping
+Scope-IOCs.ps1 -Path C:\Tools\testfile.txt -TargetFile C:\test\hosts.csv -OutputDir C:\Tools\Scoping
 
 .EXAMPLE
 
 Scope an IP address against a host base specified by a TXT file
 
-Scope-IOCs.ps1 -IPAddress -Address '172.217.4.46' -TargetTXTFile C:\test\hosts.txt -OutputDir C:\Tools\Scoping
+Scope-IOCs.ps1 -IPAddress '172.217.4.46' -TargetFile C:\test\hosts.txt -OutputDir C:\Tools\Scoping
 
 .EXAMPLE
 
 Scope a specific process against a host base consisting of only workstations and specified by ADTarget
 
-Scope-IOCs.ps1 -Process -ProcessName 'evil.exe' -ADTarget OU=Location,OU=State,DC=Company,DC=Com -WorkstationsOnly -OutputDir C:\Tools\Scoping
+Scope-IOCs.ps1 -Process 'evil.exe' -ADTarget OU=Location,OU=State,DC=Company,DC=Com -WorkstationsOnly -OutputDir C:\Tools\Scoping
 
 .EXAMPLE
 
 Scope a specific service against a host base consisting of only servers and specified by ADTarget
 
-Scope-IOCs.ps1 -Service -ServiceNAme 'evilservice' -ADTarget OU=Location,OU=State,DC=Company,DC=Com -ServersOnly -OutputDir C:\Tools\Scoping
+Scope-IOCs.ps1 -Service 'evilservice' -ADTarget OU=Location,OU=State,DC=Company,DC=Com -ServersOnly -OutputDir C:\Tools\Scoping
 
 .EXAMPLE
 
 Scope a specific local user account against a host base consisting of both servers and workstations and specified by ADTarget
 
-Scope-IOCs.ps1 -User -UserName 'eviluseraccount' -ADTarget OU=Location,OU=State,DC=Company,DC=Com -BothTargetTypes -OutputDir C:\Tools\Scoping
+Scope-IOCs.ps1 -User 'eviluseraccount' -ADTarget OU=Location,OU=State,DC=Company,DC=Com -BothTargetTypes -OutputDir C:\Tools\Scoping
 
 .EXAMPLE
 
 Scope a specific registry key against a host base consisting of user specified hosts
 
-Scope-IOCs.ps1 -RegKey -FullKeyPath HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Run\EvilKey -Target "PC1,PC2,PC3,PC4,PC5" -OutputDir C:\Tools\Scoping
+Scope-IOCs.ps1 -RegKey HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Run\EvilKey -Target "PC1,PC2,PC3,PC4,PC5" -OutputDir C:\Tools\Scoping
 
 #>
 
 param (
 
 # Parameter set for Scope-File
-[Parameter(ParameterSetName = "Scope-File", Position = 0)]
-[Switch]$File,
+[Parameter(ParameterSetName = "Scope-File", Position = 0, Mandatory = $true)]
+[String]$File,
 
-[Parameter(ParameterSetName = "Scope-File", Position = 1)]
+[Parameter(ParameterSetName = "Scope-File", Position = 1, Mandatory = $true)]
 [String]$FileStartPath,
 
-[Parameter(ParameterSetName = "Scope-File", Position = 2)]
-[String]$FileName,
-
 # Parameter set for Scope-Path
-[Parameter(ParameterSetName = "Scope-Path", Position = 0)]
-[Switch]$Path,
-
-[Parameter(ParameterSetName = "Scope-Path", Position = 1)]
-[String]$PathName,
+[Parameter(ParameterSetName = "Scope-Path", Position = 0, Mandatory = $true)]
+[String]$Path,
 
 # Parameter set for Scope-IPAddress
-[Parameter(ParameterSetName = "Scope-IPAddress", Position = 0)]
-[Switch]$IPAddress,
-
-[Parameter(ParameterSetName = "Scope-IPAddress", Position = 1)]
-[String]$Address,
+[Parameter(ParameterSetName = "Scope-IPAddress", Position = 0, Mandatory = $true)]
+[String]$IPAddress,
 
 # Parameter set for Scope-Process
-[Parameter(ParameterSetName = "Scope-Process", Position = 0)]
-[Switch]$Process,
-
-[Parameter(ParameterSetName = "Scope-Process", Position = 1)]
-[String]$ProcessName,
+[Parameter(ParameterSetName = "Scope-Process", Position = 0, Mandatory = $true)]
+[String]$Process,
 
 # Parameter set for Scope-Service
-[Parameter(ParameterSetName = "Scope-Service", Position = 0)]
-[Switch]$Service,
-
-[Parameter(ParameterSetName = "Scope-Service", Position = 1)]
-[String]$ServiceName,
+[Parameter(ParameterSetName = "Scope-Service", Position = 0, Mandatory = $true)]
+[String]$Service,
 
 #Parameter set for Scope-LocalUsers
-[Parameter(ParameterSetName = "Scope-LocalUsers", Position = 0)]
-[Switch]$User,
-
-[Parameter(ParameterSetName = "Scope-LocalUsers", Position = 1)]
-[String]$UserName,
+[Parameter(ParameterSetName = "Scope-LocalUsers", Position = 0, Mandatory = $true)]
+[String]$User,
 
 # Parameter set for Scope-RegKey
-[Parameter(ParameterSetName = "Scope-RegKey", Position = 0)]
-[Switch]$RegKey,
-
-[Parameter(ParameterSetName = "Scope-RegKey", Position = 1)]
-[String]$FullKeyPath,
+[Parameter(ParameterSetName = "Scope-RegKey", Position = 0, Mandatory = $true)]
+[String]$RegKey,
 
 # Common Parameters
-[Parameter(ParameterSetName = "Scope-File", Position = 3, Mandatory = $false)]
-[Parameter(ParameterSetName = "Scope-Path", Position = 2, Mandatory = $false)]
-[Parameter(ParameterSetName = "Scope-IPAddress", Position = 2, Mandatory = $false)]
-[Parameter(ParameterSetName = "Scope-Process", Position = 2, Mandatory = $false)]
-[Parameter(ParameterSetName = "Scope-Service", Position = 2, Mandatory = $false)]
-[Parameter(ParameterSetName = "Scope-LocalUsers", Position = 2, Mandatory = $false)]
-[Parameter(ParameterSetName = "Scope-RegKey", Position = 2, Mandatory = $false)]
-[string] $TargetTXTFile,
+[Parameter(ParameterSetName = "Scope-File", Position = 2, Mandatory = $false)]
+[Parameter(ParameterSetName = "Scope-Path", Position = 1, Mandatory = $false)]
+[Parameter(ParameterSetName = "Scope-IPAddress", Position = 1, Mandatory = $false)]
+[Parameter(ParameterSetName = "Scope-Process", Position = 1, Mandatory = $false)]
+[Parameter(ParameterSetName = "Scope-Service", Position = 1, Mandatory = $false)]
+[Parameter(ParameterSetName = "Scope-LocalUsers", Position = 1, Mandatory = $false)]
+[Parameter(ParameterSetName = "Scope-RegKey", Position = 1, Mandatory = $false)]
+[string] $TargetFile,
 
-[Parameter(ParameterSetName = "Scope-File", Position = 3, Mandatory = $false)]
-[Parameter(ParameterSetName = "Scope-Path", Position = 2, Mandatory = $false)]
-[Parameter(ParameterSetName = "Scope-IPAddress", Position = 2, Mandatory = $false)]
-[Parameter(ParameterSetName = "Scope-Process", Position = 2, Mandatory = $false)]
-[Parameter(ParameterSetName = "Scope-Service", Position = 2, Mandatory = $false)]
-[Parameter(ParameterSetName = "Scope-LocalUsers", Position = 2, Mandatory = $false)]
-[Parameter(ParameterSetName = "Scope-RegKey", Position = 2, Mandatory = $false)]
-[string] $TargetCSVFile,
-
-[Parameter(ParameterSetName = "Scope-File", Position = 3, Mandatory = $false)]
-[Parameter(ParameterSetName = "Scope-Path", Position = 2, Mandatory = $false)]
-[Parameter(ParameterSetName = "Scope-IPAddress", Position = 2, Mandatory = $false)]
-[Parameter(ParameterSetName = "Scope-Process", Position = 2, Mandatory = $false)]
-[Parameter(ParameterSetName = "Scope-Service", Position = 2, Mandatory = $false)]
-[Parameter(ParameterSetName = "Scope-LocalUsers", Position = 2, Mandatory = $false)]
-[Parameter(ParameterSetName = "Scope-RegKey", Position = 2, Mandatory = $false)]
+[Parameter(ParameterSetName = "Scope-File", Position = 2, Mandatory = $false)]
+[Parameter(ParameterSetName = "Scope-Path", Position = 1, Mandatory = $false)]
+[Parameter(ParameterSetName = "Scope-IPAddress", Position = 1, Mandatory = $false)]
+[Parameter(ParameterSetName = "Scope-Process", Position = 1, Mandatory = $false)]
+[Parameter(ParameterSetName = "Scope-Service", Position = 1, Mandatory = $false)]
+[Parameter(ParameterSetName = "Scope-LocalUsers", Position = 1, Mandatory = $false)]
+[Parameter(ParameterSetName = "Scope-RegKey", Position = 1, Mandatory = $false)]
 [string[]] $Target,
 
-[Parameter(ParameterSetName = "Scope-File", Position = 3, Mandatory = $false)]
-[Parameter(ParameterSetName = "Scope-Path", Position = 2, Mandatory = $false)]
-[Parameter(ParameterSetName = "Scope-IPAddress", Position = 2, Mandatory = $false)]
-[Parameter(ParameterSetName = "Scope-Process", Position = 2, Mandatory = $false)]
-[Parameter(ParameterSetName = "Scope-Service", Position = 2, Mandatory = $false)]
-[Parameter(ParameterSetName = "Scope-LocalUsers", Position = 2, Mandatory = $false)]
-[Parameter(ParameterSetName = "Scope-RegKey", Position = 2, Mandatory = $false)]
+[Parameter(ParameterSetName = "Scope-File", Position = 2, Mandatory = $false)]
+[Parameter(ParameterSetName = "Scope-Path", Position = 1, Mandatory = $false)]
+[Parameter(ParameterSetName = "Scope-IPAddress", Position = 1, Mandatory = $false)]
+[Parameter(ParameterSetName = "Scope-Process", Position = 1, Mandatory = $false)]
+[Parameter(ParameterSetName = "Scope-Service", Position = 1, Mandatory = $false)]
+[Parameter(ParameterSetName = "Scope-LocalUsers", Position = 1, Mandatory = $false)]
+[Parameter(ParameterSetName = "Scope-RegKey", Position = 1, Mandatory = $false)]
 [string] $ADTarget,
 
-[Parameter(ParameterSetName = "Scope-File", Position = 4, Mandatory = $true)]
-[Parameter(ParameterSetName = "Scope-Path", Position = 3, Mandatory = $true)]
-[Parameter(ParameterSetName = "Scope-IPAddress", Position = 3, Mandatory = $true)]
-[Parameter(ParameterSetName = "Scope-Process", Position = 3, Mandatory = $true)]
-[Parameter(ParameterSetName = "Scope-Service", Position = 3, Mandatory = $true)]
-[Parameter(ParameterSetName = "Scope-LocalUsers", Position = 3, Mandatory = $true)]
-[Parameter(ParameterSetName = "Scope-RegKey", Position = 3, Mandatory = $true)]
+[Parameter(ParameterSetName = "Scope-File", Position = 3, Mandatory = $true)]
+[Parameter(ParameterSetName = "Scope-Path", Position = 2, Mandatory = $true)]
+[Parameter(ParameterSetName = "Scope-IPAddress", Position = 2, Mandatory = $true)]
+[Parameter(ParameterSetName = "Scope-Process", Position = 2, Mandatory = $true)]
+[Parameter(ParameterSetName = "Scope-Service", Position = 2, Mandatory = $true)]
+[Parameter(ParameterSetName = "Scope-LocalUsers", Position = 2, Mandatory = $true)]
+[Parameter(ParameterSetName = "Scope-RegKey", Position = 2, Mandatory = $true)]
 [string] $OutputDir,
 
-[Parameter(ParameterSetName = "Scope-File", Position = 5, Mandatory = $false)]
-[Parameter(ParameterSetName = "Scope-Path", Position = 4, Mandatory = $false)]
-[Parameter(ParameterSetName = "Scope-IPAddress", Position = 4, Mandatory = $false)]
-[Parameter(ParameterSetName = "Scope-Process", Position = 4, Mandatory = $false)]
-[Parameter(ParameterSetName = "Scope-Service", Position = 4, Mandatory = $false)]
-[Parameter(ParameterSetName = "Scope-LocalUsers", Position = 4, Mandatory = $false)]
-[Parameter(ParameterSetName = "Scope-RegKey", Position = 4, Mandatory = $false)]
+[Parameter(ParameterSetName = "Scope-File", Position = 4, Mandatory = $false)]
+[Parameter(ParameterSetName = "Scope-Path", Position = 3, Mandatory = $false)]
+[Parameter(ParameterSetName = "Scope-IPAddress", Position = 3, Mandatory = $false)]
+[Parameter(ParameterSetName = "Scope-Process", Position = 3, Mandatory = $false)]
+[Parameter(ParameterSetName = "Scope-Service", Position = 3, Mandatory = $false)]
+[Parameter(ParameterSetName = "Scope-LocalUsers", Position = 3, Mandatory = $false)]
+[Parameter(ParameterSetName = "Scope-RegKey", Position = 3, Mandatory = $false)]
 [switch] $ServersOnly,
 
-[Parameter(ParameterSetName = "Scope-File", Position = 5, Mandatory = $false)]
-[Parameter(ParameterSetName = "Scope-Path", Position = 4, Mandatory = $false)]
-[Parameter(ParameterSetName = "Scope-IPAddress", Position = 4, Mandatory = $false)]
-[Parameter(ParameterSetName = "Scope-Process", Position = 4, Mandatory = $false)]
-[Parameter(ParameterSetName = "Scope-Service", Position = 4, Mandatory = $false)]
-[Parameter(ParameterSetName = "Scope-LocalUsers", Position = 4, Mandatory = $false)]
-[Parameter(ParameterSetName = "Scope-RegKey", Position = 4, Mandatory = $false)]
+[Parameter(ParameterSetName = "Scope-File", Position = 4, Mandatory = $false)]
+[Parameter(ParameterSetName = "Scope-Path", Position = 3, Mandatory = $false)]
+[Parameter(ParameterSetName = "Scope-IPAddress", Position = 3, Mandatory = $false)]
+[Parameter(ParameterSetName = "Scope-Process", Position = 3, Mandatory = $false)]
+[Parameter(ParameterSetName = "Scope-Service", Position = 3, Mandatory = $false)]
+[Parameter(ParameterSetName = "Scope-LocalUsers", Position = 3, Mandatory = $false)]
+[Parameter(ParameterSetName = "Scope-RegKey", Position = 3, Mandatory = $false)]
 [switch] $WorkstationsOnly,
 
+[Parameter(ParameterSetName = "Scope-File", Position = 4, Mandatory = $false)]
+[Parameter(ParameterSetName = "Scope-Path", Position = 3, Mandatory = $false)]
+[Parameter(ParameterSetName = "Scope-IPAddress", Position = 3, Mandatory = $false)]
+[Parameter(ParameterSetName = "Scope-Process", Position = 3, Mandatory = $false)]
+[Parameter(ParameterSetName = "Scope-Service", Position = 3, Mandatory = $false)]
+[Parameter(ParameterSetName = "Scope-LocalUsers", Position = 3, Mandatory = $false)]
+[Parameter(ParameterSetName = "Scope-RegKey", Position = 3, Mandatory = $false)]
+[switch] $BothTargetTypes,
+
 [Parameter(ParameterSetName = "Scope-File", Position = 5, Mandatory = $false)]
 [Parameter(ParameterSetName = "Scope-Path", Position = 4, Mandatory = $false)]
 [Parameter(ParameterSetName = "Scope-IPAddress", Position = 4, Mandatory = $false)]
@@ -279,11 +242,9 @@ param (
 [Parameter(ParameterSetName = "Scope-Service", Position = 4, Mandatory = $false)]
 [Parameter(ParameterSetName = "Scope-LocalUsers", Position = 4, Mandatory = $false)]
 [Parameter(ParameterSetName = "Scope-RegKey", Position = 4, Mandatory = $false)]
-[switch] $BothTargetTypes
-
+[Int32] $ThrottleLimit = 0
 
 )
-
 
 process {
 
@@ -293,20 +254,15 @@ process {
 
 function Scope-File {
 
-  param ([string]$FileStartPath, [string]$FileName)
+  param ([string]$File, [string]$FileStartPath )
 
   # Determine if file is found on system
-  $FileEvalPath = Get-ChildItem -Path $FileStartPath -Recurse -Name -Include $FileName
+  $FileEvalPath = Get-ChildItem -Path $FileStartPath -Recurse -Name -Include $File
 
   # Append eval results to CSV
   if ($FileEvalPath){
 
-    #Create a nicer formatted array for use in the CSV output
-    foreach ($FilePath in $FileEvalPath){
-
-        $FilePathArray += "$Path`n"
-
-    }
+    $FilePathArray += ($FileEvalPath -Join "`n")
 
     # return PSCustomObject for recording in CSV - includes path of discovered child object
     $OutHash =@{ Host = $env:COMPUTERNAME; Detected = "True"; Path = $FilePathArray}
@@ -323,182 +279,159 @@ function Scope-File {
 # File or directory based on full path
 function Scope-Path {
 
-  param ([string]$PathName)
+  param ([string]$Path)
 
   # Determine if path is found on system
-  $PathEval = Test-Path $PathName
+  $PathEval = Test-Path $Path
 
   # Append eval results to CSV
-  if ($PathEval){
-
-    # return PSCustomObject for recording in CSV
-    $OutHash =@{ Host = $env:COMPUTERNAME; Detected = "True"}
-    return [PSCustomObject]$OutHash
+  # return PSCustomObject for recording in CSV
+  $OutHash =@{ Host = $env:COMPUTERNAME; Detected = [Boolean]$PathEval}
+  return [PSCustomObject]$OutHash
     
-  } else {
-
-    # return PSCustomObject for recording in CSV
-    $OutHash =@{ Host = $env:COMPUTERNAME; Detected = "False"}
-    return [PSCustomObject]$OutHash
   }
-}
 
 # IP ADDRESSES
 function Scope-IPAddress {
 
-  param ([string]$Address)
+  param ([string]$IPAddress)
 
   # Determine if the IP address is found on system
-  $IPAddressEval = netstat | select-string -pattern $Address
+  $IPAddressEval = netstat -naob | Select-String -pattern ".*$IPAddress.*" | Select-Object -ExpandProperty Matches | Select-Object -ExpandProperty Value
 
   # Determine if path is found on system
-  if ($IPAddressEval){
-
-    # return PSCustomObject for recording in CSV
-    $OutHash =@{ Host = $env:COMPUTERNAME; Detected = "True"; Details = $IPAddressEval}
-    return [PSCustomObject]$OutHash
+  # return PSCustomObject for recording in CSV
+  $OutHash =@{ Host = $env:COMPUTERNAME; Detected = [Boolean]$IPAddressEval; Details = ($IPAddressEval -Join "`n")}
+  return [PSCustomObject]$OutHash
     
-  } else {
-
-    # return PSCustomObject for recording in CSV
-    $OutHash =@{ Host = $env:COMPUTERNAME; Detected = "False"; Details = $null}
-    return [PSCustomObject]$OutHash
-  }
 }
 
 # PROCESSES
 function Scope-Process {
 
-  param ([string]$ProcessName)
+  param ([string]$Process)
 
   # Determine if the IP address is found on system
-  $ProcessEval = Get-CimInstance -ClassName win32_process -Filter "name LIKE '$ProcessName%'"
+  $ProcessEval = Get-CimInstance -ClassName win32_process -Filter "name LIKE '$Process%'"
 
   # Determine if process is found on system
-  if ($ProcessEval){
-
-    $ProcessDetails = $ProcessEval | Select Name, ExecutablePath, Commandline, ProcessID, ParentProcessID
-
-    #Create nicer formatted arrays for use in the CSV output
-    foreach ($Object in $ProcessDetails){
-        
-        $NameArray += ("{0}`n" -f $Object.Name)
-        $EPArray += ("{0}`n" -f $Object.ExecutablePath)
-        $CMDLineArray += ("{0}`n" -f $Object.Commandline)
-        $PIDArray += ("{0}`n" -f $Object.ProcessID)
-        $PPIDArray += ("{0}`n" -f $Object.ParentProcessID)
-
-    }
+     
+  $NameArray += ($ProcessEval.Name -Join "`n")
+  $EPArray += ($ProcessEval.ExecutablePath -Join "`n")
+  $CMDLineArray += ($ProcessEval.Commandline -Join "`n")
+  $PIDArray += ($ProcessEval.ProcessID -Join "`n")
+  $PPIDArray += ($ProcessEval.ParentProcessID -Join "`n")
 
     # return PSCustomObject for recording in CSV
-    $OutHash =@{ Host = $env:COMPUTERNAME; Detected = "True"; Name = $NameArray; ExecutablePath = $EPArray; Commandline = $CMDLineArray; PID = $PIDArray; ParentPID = $PPIDArray }
-    return [PSCustomObject]$OutHash
-    
-  } else {
+  $OutHash =@{ Host = $env:COMPUTERNAME; Detected = [Boolean]$ProcessEval; Name = $NameArray; ExecutablePath = $EPArray; Commandline = $CMDLineArray; PID = $PIDArray; ParentPID = $PPIDArray }
+  return [PSCustomObject]$OutHash
 
-    # return PSCustomObject for recording in CSV
-    $OutHash =@{ Host = $env:COMPUTERNAME; Detected = "False"; Name = $null; ExecutablePath = $null; Commandline = $null; PID = $null; ParentPID = $null}
-    return [PSCustomObject]$OutHash
-  }
 }
 
 # SERVICES
 function Scope-Service {
 
-  param ([string]$ServiceName)
+  param ([string]$Service)
 
   # Determine if the IP address is found on system
-  $ServiceEval = Get-CimInstance -ClassName win32_service -Filter "name LIKE '$ServiceName%'"
+  $ServiceEval = Get-CimInstance -ClassName win32_service -Filter "name LIKE '$Service%'"
 
   # Determine if service is found on system
-  if ($ServiceEval){
 
-    $ServiceDetails = $ServiceEval | Select ProcessID, Name, DisplayName, PathName, ServiceType, StartMode, Status
+  $NameArray += ($ServiceEval.Name -Join "`n")
+  $DNArray += ($ServiceEval.DisplayName -Join "`n")
+  $PIDArray += ($ServiceEval.ProcessID -Join "`n")
+  $PathArray += ($ServiceEval.PathName -Join "`n")
+  $STArray += ($ServiceEval.ServiceType -Join "`n")
+  $SMArray += ($ServiceEval.StartMode -Join "`n")
+  $StatusArray += ($ServiceEval.Status -Join "`n")
 
-    #Create nicer formatted arrays for use in the CSV output
-    foreach ($Object in $ServiceDetails){
-
-        $NameArray += ("{0}`n" -f $Object.Name)
-        $DNArray += ("{0}`n" -f $Object.DisplayName)
-        $PIDArray += ("{0}`n" -f $Object.ProcessID)
-        $PathArray += ("{0}`n" -f $Object.PathName)
-        $STArray += ("{0}`n" -f $Object.ServiceType)
-        $SMArray += ("{0}`n" -f $Object.StartMode)
-        $StatusArray += ("{0}`n" -f $Object.Status)
-
-    }
-
-    # return PSCustomObject for recording in CSV
-    $OutHash =@{ Host = $env:COMPUTERNAME; Detected = "True"; Name = $NameArray; DisplayName = $DNArray; PID = $PIDArray; Path = $PathArray; ServiceType = $STArray; StartMode = $SMArray; Status = $StatusArray }
-    return [PSCustomObject]$OutHash
+  # return PSCustomObject for recording in CSV
+  $OutHash =@{ Host = $env:COMPUTERNAME; Detected = [Boolean]$ServiceEval; Name = $NameArray; DisplayName = $DNArray; PID = $PIDArray; Path = $PathArray; ServiceType = $STArray; StartMode = $SMArray; Status = $StatusArray }
+  return [PSCustomObject]$OutHash
     
-  } else {
-
-    # return PSCustomObject for recording in CSV
-    $OutHash =@{ Host = $env:COMPUTERNAME; Detected = "False"; Name = $null; DisplayName = $null; PID = $null; Path = $null; ServiceType = $null; StartMode = $null; Status = $null }
-    return [PSCustomObject]$OutHash
   }
-}
 
 # USER ACCOUNTS
 function Scope-LocalUsers {
 
-  param ([string]$UserName)
+  param ([string]$User)
 
   # Determine if the IP address is found on system
-  $UserEval = Get-LocalUser -Name $Username
+  $UserEval = Get-LocalUser -Name $User -ErrorAction SilentlyContinue
 
   # Determine if service is found on system
-  if ($UserEval){
-
-    $UserDetails = $UserEval | Select Name, Enabled
-
-    #Create nicer formatted arrays for use in the CSV output
-    foreach ($Object in $UserDetails){
-    
-        $NameArray += ("{0}`n" -f $Object.Name)
-        $EnabledArray += ("{0}`n" -f $Object.Enabled)
+  
+  $NameArray += ($UserEval.Name -Join "`n")
+  $EnabledArray += ($UserEval.Enabled -Join "`n")
         
-    }
-
-    # return PSCustomObject for recording in CSV
-    $OutHash =@{ Host = $env:COMPUTERNAME; Detected = "True"; Name = $NameArray; Enabled = $EnabledArray }
-    return [PSCustomObject]$OutHash
+  # return PSCustomObject for recording in CSV
+  $OutHash =@{ Host = $env:COMPUTERNAME; Detected = [Boolean]$UserEval; Name = $NameArray; Enabled = $EnabledArray }
+  return [PSCustomObject]$OutHash
     
-  } else {
-
-    # return PSCustomObject for recording in CSV
-    $OutHash =@{ Host = $env:COMPUTERNAME; Detected = "False"; Name = $null; Enabled = $null }
-    return [PSCustomObject]$OutHash
-  }
 }
 
 # REGISTRY KEYS - Specific Registry key at a specific path
 function Scope-RegKey {
 
-  param ([string]$FullKeyPath)
+  param ([string]$RegKey)
 
   # Determine if path is found on system
-  $FullKeyEval = Test-Path $FullKeyPath
+  $FullKeyEval = Test-Path $RegKey
 
   # Append eval results to CSV
-  if ($FullKeyEval){
 
-    # return PSCustomObject for recording in CSV
-    $OutHash =@{ Host = $env:COMPUTERNAME; Detected = "True"}
-    return [PSCustomObject]$OutHash
+  # return PSCustomObject for recording in CSV
+  $OutHash =@{ Host = $env:COMPUTERNAME; Detected = [Boolean]$RegKey}
+  return [PSCustomObject]$OutHash
     
-  } else {
-
-    # return PSCustomObject for recording in CSV
-    $OutHash =@{ Host = $env:COMPUTERNAME; Detected = "False"}
-    return [PSCustomObject]$OutHash
-  }
 }
+
+# Write-Log Function
+
+function Write-Log {
+    param (
+        [Parameter(Mandatory=$true)]
+        [String]$Message
+    )
+
+    process {
+        # Get UTC $Date
+        $Date = (Get-Date).ToUniversalTime()
+
+        # Build the $LogPath
+        $LogPath = '{0}\{1:yyyy-MM-dd}.csv' -f $OutputDir, $Date
+
+        # Build $LogLine
+        $LogLine = [PSCustomObject]@{
+            Date = '{0:u}' -f $Date
+            UserName = $ENV:UserName
+            Message = $Message
+        }
+
+        $LogLine | Export-Csv -NoTypeInformation -Append -Path $LogPath
+    }
+}
+
+# Validate that Active Directory module is loaded and ready for use
+
+if (!(Get-Command 'Get-ADComputer')){
+
+  try {
+
+    Import-Module 'ActiveDirectory' -ErrorAction Stop
+
+  } catch {
+
+    throw "An error occured while importing the Active Directory module. Quitting."
+
+  }
+
+} 
 
 # Validate that only one host ingestion parameter was used
 
-if (([bool]$TargetTXTFile + [bool]$TargetCSVFile + [bool]$Target + [bool]$ADTarget) -ne 1){
+if (([bool]$TargetFile + [bool]$Target + [bool]$ADTarget) -ne 1){
 
   Throw "Only one host ingestion parameter can be used. Quitting."
 
@@ -515,43 +448,29 @@ if (([bool]$TargetTXTFile + [bool]$TargetCSVFile + [bool]$Target + [bool]$ADTarg
 
   }
 
-  #Initiate Log File
-
-  $Log = ("{0}\{1:yyyy-MM-dd}.log" -f $OutputDir, $(Get-Date))
-
   # Build hosts list for use during invocation of IOC Scoping
 
-  if ($TargetTXTFile) {
+  if ($TargetFile) {
 
     try {
 
-      $Hosts = Get-Content $TargetTXTFile
+      $Hosts = Import-CSV $TargetFile -ErrorAction Stop
 
     } catch {
 
-      throw "Error occurred while importing hosts with TargetTXTFile parameter. Quitting."
+      try {
+
+        $Hosts = Get-Content $TargetFile -ErrorAction Stop
+
+      } catch {
+
+        throw "An error occured while Importing Hosts using the TargetFile parameter. Quitting."
+
+      }
 
     }
 
-
   } 
-
-  if ($TargetCSVFile) {
-
-    try {
-
-      $HostsImport = Import-Csv $TargetCSVFile
-      $Hosts = $HostsImport.ComputerName
-
-    } catch {
-
-      throw "Error occurred while importing hosts with TargetCSVFile parameter. Quitting."
-
-    }
-
-
-  } 
-
 
   if ($Target){
 
@@ -565,7 +484,6 @@ if (([bool]$TargetTXTFile + [bool]$TargetCSVFile + [bool]$Target + [bool]$ADTarg
 
     }
 
-
   }
 
   if ($ADTarget){
@@ -574,7 +492,7 @@ if (([bool]$TargetTXTFile + [bool]$TargetCSVFile + [bool]$Target + [bool]$ADTarg
 
       try {
 
-        $Hosts = Get-ADComputer -Filter { OperatingSystem -eq 'Windows 7 Enterprise' -or OperatingSystem -eq 'Windows 10 Enterprise' } -SearchBase $ADTarget | Select-Object -ExpandProperty Name
+        $Hosts = Get-ADComputer -Filter { OperatingSystem -eq 'Windows 7 Enterprise' -or OperatingSystem -eq 'Windows 10 Enterprise' } -SearchBase $ADTarget | Select-Object -ExpandProperty Name -ErrorAction Stop
 
       } catch {
 
@@ -592,7 +510,7 @@ if (([bool]$TargetTXTFile + [bool]$TargetCSVFile + [bool]$Target + [bool]$ADTarg
 
        try {
 
-        $Hosts = Get-ADComputer -Filter { OperatingSystem -like 'Windows Server*' } -SearchBase $ADTarget | Select-Object -ExpandProperty Name
+        $Hosts = Get-ADComputer -Filter { OperatingSystem -like 'Windows Server*' } -SearchBase $ADTarget | Select-Object -ExpandProperty Name -ErrorAction Stop
 
       } catch {
 
@@ -611,7 +529,7 @@ if (([bool]$TargetTXTFile + [bool]$TargetCSVFile + [bool]$Target + [bool]$ADTarg
 
        try {
 
-        $Hosts = Get-ADComputer -SearchBase $ADTarget | Select-Object -ExpandProperty Name
+        $Hosts = Get-ADComputer -SearchBase $ADTarget | Select-Object -ExpandProperty Name -ErrorAction Stop
 
       } catch {
 
@@ -627,116 +545,29 @@ if (([bool]$TargetTXTFile + [bool]$TargetCSVFile + [bool]$Target + [bool]$ADTarg
 
   }
 
-  #Let the scoping begin
+#Let the scoping begin
 
-  Write-Host "Scoping began at $(Get-Date)"
+Write-Host "Scoping began at $(Get-Date)"
 
-  #Scope IOCs
+#Scope IOCs
 
-  if ($File){
+# Execute based on selected parameter set
+switch ($PSCmdlet.ParameterSetName) {
+  "Scope-File" { $Arguments = @($File,$FileStartPath); $ScriptBlock = ${Function:Scope-File} }
+  "Scope-Path" { $Arguments = @($Path); $ScriptBlock = ${Function:Scope-Path} }
+  "Scope-IPAddress" { $Arguments = @($IPAddress); $ScriptBlock = ${Function:Scope-IPAddress} }
+  "Scope-Process" { $Arguments = @($Process); $ScriptBlock =  ${Function:Scope-Proces} }
+  "Scope-Service" { $Arguments = @($Service); $ScriptBlock =  ${Function:Scope-Service} }
+  "Scope-LocalUsers" { $Arguments = @($UserName); $ScriptBlock = ${Function:Scope-LocalUsers} }
+  "Scope-RegKey" { $Arguments = @($RegKey); $ScriptBlock = ${Function:Scope-RegKey} }
+}
 
-    try {
-
-      Invoke-Command -ComputerName $Hosts -Scriptblock ${Function:Scope-File} -ArgumentList $StartPath, $FileName | Export-Csv ("{0}\{1:yyyy-MM-dd_HH-mm}_Scope-File.csv" -f $OutputDir, $(Get-Date)) -Append
-
-    } catch {
-
-      Add-Content $Log -Value "There was a problem running ScopeIOCs.ps1 using the file parameter."
-
-    }
-
-
-  }
-
-  if ($Path){
-
-    try {
-
-      Invoke-Command -ComputerName $Hosts -Scriptblock ${Function:Scope-Path} -ArgumentList $PathName | Export-Csv ("{0}\{1:yyyy-MM-dd_HH-mm}_Scope-Path.csv" -f $OutputDir, $(Get-Date)) -Append
-
-    } catch {
-
-      Add-Content $Log -Value "There was a problem running ScopeIOCs.ps1 using the path parameter."
-
-    }
-
-
-  }
-
-  if ($IPAddress){
-
-    try {
-
-      Invoke-Command -ComputerName $Hosts -Scriptblock ${Function:Scope-IPAddress} -ArgumentList $Address | Export-Csv ("{0}\{1:yyyy-MM-dd_HH-mm}_Scope-IPAddress.csv" -f $OutputDir, $(Get-Date)) -Append
-
-    } catch {
-
-      Add-Content $Log -Value "There was a problem running ScopeIOCs.ps1 using the IPAddress parameter."
-
-    }
-
-
-  }
-
-  if ($Process){
-
-    try {
-
-      Invoke-Command -ComputerName $Hosts -Scriptblock ${Function:Scope-Process} -ArgumentList $ProcessName | Export-Csv ("{0}\{1:yyyy-MM-dd_HH-mm}_Scope-Process.csv" -f $OutputDir, $(Get-Date)) -Append
-
-    } catch {
-
-      Add-Content $Log -Value "There was a problem running ScopeIOCs.ps1 using the process parameter."
-
-    }
-
-
-  }
-
-  if ($Service){
-
-    try {
-
-      Invoke-Command -ComputerName $Hosts -Scriptblock ${Function:Scope-Service} -ArgumentList $ServiceName | Export-Csv ("{0}\{1:yyyy-MM-dd_HH-mm}_Scope-Service.csv" -f $OutputDir, $(Get-Date)) -Append
-
-    } catch {
-
-      Add-Content $Log -Value "There was a problem running ScopeIOCs.ps1 using the service parameter."
-
-    }
-
-
-  }
-
-  if ($User){
-
-    try {
-
-      Invoke-Command -ComputerName $Hosts -Scriptblock ${Function:Scope-LocalUsers} -ArgumentList $UserName | Export-Csv ("{0}\{1:yyyy-MM-dd_HH-mm}_Scope-LocalUsers.csv" -f $OutputDir, $(Get-Date)) -Append
-
-    } catch {
-
-      Add-Content $Log -Value "There was a problem running ScopeIOCs.ps1 using the User parameter."
-
-    }
-
-
-  }
-
-  if ($RegKey){
-
-    try {
-
-      Invoke-Command -ComputerName $Hosts -Scriptblock ${Function:Scope-RegKey} -ArgumentList $FullKeyPAth | Export-Csv ("{0}\{1:yyyy-MM-dd_HH-mm}_Scope-RegKey.csv" -f $OutputDir, $(Get-Date)) -Append
-
-    } catch {
-
-      Add-Content $Log -Value "There was a problem running ScopeIOCs.ps1 using the RegKey parameter."
-
-    }
-
-
-  }
+# PowerShell Remoting for the win
+try {
+    Invoke-Command -ComputerName $Hosts -ScriptBlock $ScriptBlock -ArgumentList $Arguments -ThrottleLimit $PSThrottleLimit | Export-Csv ("{0}\{1:yyyy-MM-dd_HH-mm}_{2}.csv" -f $OutputDir, $(Get-Date), $PSCmdlet.ParameterSetName) -Append -ErrorAction Stop
+} catch {
+    Write-Log -Message ("There was a problem running ScopeIOCs.ps1 using the {0} parameter" -f ($PSCmdlet.ParameterSetName -Replace '^Scope-'))
+}
 
 #End Scoping
 
