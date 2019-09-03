@@ -547,8 +547,8 @@ if (([bool]$TargetFile + [bool]$Target + [bool]$ADTarget) -ne 1){
   }
 
 #Let the scoping begin
-
-Write-Host "Scoping began at $(Get-Date)"
+$Message = "Scoping began at $(Get-Date)"
+Write-Log -Message $Message
 
 #Scope IOCs
 #Execute based on selected parameter set
@@ -573,6 +573,7 @@ try {
 }
 
 #End Scoping
-Write-Host "Scoping ended at $(Get-Date)" 
+$Message = "Scoping ended at $(Get-Date)"
+Write-Log -Message $Message 
 
 }
