@@ -89,8 +89,8 @@ PowerShell Remoting Specific Parameters
     Used to specify the value for ThrottleLimit to use with Invoke-Command. Default is set to use the PS Remoting default of 32
 
 .NOTES
-    Updated: 2/14/2019        
     Release Date: 2/14/2019
+    Updated: 9/3/2019
    
     Author: Drew Schmitt
 
@@ -322,7 +322,7 @@ function Scope-Process {
   $PIDArray += ($ProcessEval.ProcessID -Join "`n")
   $PPIDArray += ($ProcessEval.ParentProcessID -Join "`n")
 
-    # return PSCustomObject for recording in CSV
+  # return PSCustomObject for recording in CSV
   $OutHash =@{ Host = $env:COMPUTERNAME; Detected = [Boolean]$ProcessEval; Name = $NameArray; ExecutablePath = $EPArray; Commandline = $CMDLineArray; PID = $PIDArray; ParentPID = $PPIDArray }
   return [PSCustomObject]$OutHash
 
@@ -361,7 +361,6 @@ function Scope-LocalUsers {
   $UserEval = Get-LocalUser -Name $User -ErrorAction SilentlyContinue
 
   # Determine if service is found on system
-  
   $NameArray += ($UserEval.Name -Join "`n")
   $EnabledArray += ($UserEval.Enabled -Join "`n")
         
@@ -380,7 +379,6 @@ function Scope-RegKey {
   $FullKeyEval = Test-Path $RegKey
 
   # Append eval results to CSV
-
   # return PSCustomObject for recording in CSV
   $OutHash =@{ Host = $env:COMPUTERNAME; Detected = [Boolean]$RegKey}
   return [PSCustomObject]$OutHash
@@ -388,7 +386,6 @@ function Scope-RegKey {
 }
 
 # Write-Log Function
-
 function Write-Log {
     param (
         [Parameter(Mandatory=$true)]
@@ -400,7 +397,7 @@ function Write-Log {
         $Date = (Get-Date).ToUniversalTime()
 
         # Build the $LogPath
-        $LogPath = '{0}\{1:yyyy-MM-dd}.csv' -f $OutputDir, $Date
+        $LogPath = '{0}\{1:yyyy-MM-dd}_Log.csv' -f $OutputDir, $Date
 
         # Build $LogLine
         $LogLine = [PSCustomObject]@{
@@ -414,7 +411,6 @@ function Write-Log {
 }
 
 # Validate that Active Directory module is loaded and ready for use
-
 if (!(Get-Command 'Get-ADComputer')){
 
   try {
@@ -423,7 +419,8 @@ if (!(Get-Command 'Get-ADComputer')){
 
   } catch {
 
-    throw "An error occured while importing the Active Directory module. Quitting."
+    $ADModule = $False
+    Write-Warning "An error occured while importing the Active Directory module. Continuing, however, AD capabilities will be degraded."
 
   }
 
@@ -438,7 +435,6 @@ if (([bool]$TargetFile + [bool]$Target + [bool]$ADTarget) -ne 1){
 }
 
 # Output Directory
-
 # Verify if output directory exists, if not create it
   $OutputTest = Test-Path $OutputDir
 
@@ -449,12 +445,11 @@ if (([bool]$TargetFile + [bool]$Target + [bool]$ADTarget) -ne 1){
   }
 
   # Build hosts list for use during invocation of IOC Scoping
-
   if ($TargetFile) {
 
     try {
 
-      $Hosts = Import-CSV $TargetFile -ErrorAction Stop
+      $Hosts = Import-CSV $TargetFile | Select -ExpandProperty ComputerName -ErrorAction Stop
 
     } catch {
 
@@ -467,9 +462,7 @@ if (([bool]$TargetFile + [bool]$Target + [bool]$ADTarget) -ne 1){
         throw "An error occured while Importing Hosts using the TargetFile parameter. Quitting."
 
       }
-
     }
-
   } 
 
   if ($Target){
@@ -488,70 +481,77 @@ if (([bool]$TargetFile + [bool]$Target + [bool]$ADTarget) -ne 1){
 
   if ($ADTarget){
 
-    if ($WorkstationsOnly){
+    if ($ADModule){
 
-      try {
+      if ($WorkstationsOnly){
 
-        $Hosts = Get-ADComputer -Filter { OperatingSystem -eq 'Windows 7 Enterprise' -or OperatingSystem -eq 'Windows 10 Enterprise' } -SearchBase $ADTarget | Select-Object -ExpandProperty Name -ErrorAction Stop
+        try {
 
-      } catch {
+          $Hosts = Get-ADComputer -Filter { OperatingSystem -eq 'Windows 7 Enterprise' -or OperatingSystem -eq 'Windows 10 Enterprise' } -SearchBase $ADTarget | Select-Object -ExpandProperty Name -ErrorAction Stop
 
-        Throw "Could not expand ADTarget to obtain hosts. Quitting."
+        } catch {
 
-      }
-    } elseif ($ServersOnly){
+          Throw "Could not expand ADTarget to obtain hosts. Quitting."
 
-        $Confirm = Read-Host "You are about to run scoping against all servers in the specific AD Target. Are you sure you want to continue? [Y/N]"
-
-        if ($confirm.ToLower() -ne 'y'){
-
-          Exit
         }
 
-       try {
+      } elseif ($ServersOnly){
 
-        $Hosts = Get-ADComputer -Filter { OperatingSystem -like 'Windows Server*' } -SearchBase $ADTarget | Select-Object -ExpandProperty Name -ErrorAction Stop
+          $Confirm = Read-Host "You are about to run scoping against all servers in the specific AD Target. Are you sure you want to continue? [Y/N]"
 
-      } catch {
+          if ($confirm.ToLower() -ne 'y'){
 
-        Throw "Could not expand ADTarget to obtain hosts. Quitting."
+            Exit
+          }
 
-      }
+         try {
 
-    } elseif ($BothTargetTypes){
+          $Hosts = Get-ADComputer -Filter { OperatingSystem -like 'Windows Server*' } -SearchBase $ADTarget | Select-Object -ExpandProperty Name -ErrorAction Stop
 
-        $Confirm = Read-Host "You are about to run scoping against all servers in the specific AD Target. Are you sure you want to continue? [Y/N]"
+        } catch {
 
-        if ($confirm.ToLower() -ne 'y'){
+          Throw "Could not expand ADTarget to obtain hosts. Quitting."
 
-          Exit
         }
 
-       try {
+      } elseif ($BothTargetTypes){
 
-        $Hosts = Get-ADComputer -SearchBase $ADTarget | Select-Object -ExpandProperty Name -ErrorAction Stop
+          $Confirm = Read-Host "You are about to run scoping against all workstations and servers in the specific AD Target. Are you sure you want to continue? [Y/N]"
 
-      } catch {
+          if ($confirm.ToLower() -ne 'y'){
 
-        Throw "Could not expand ADTarget to obtain hosts. Quitting."
+            Exit
+          }
+
+         try {
+
+          $Hosts = Get-ADComputer -SearchBase $ADTarget | Select-Object -ExpandProperty Name -ErrorAction Stop
+
+        } catch {
+
+          Throw "Could not expand ADTarget to obtain hosts. Quitting."
+
+        }
+
+      } else {
+
+        Throw "No scope flags provided for AD Scoping. Quitting."
 
       }
-
-    } else {
-
-      Throw "No scope flags provided for AD Scoping. Quitting."
-
     }
 
+    if (!$ADModule){
+
+      throw "AD import selected, but AD Module not available or could not be imported. Quitting."
+    }
   }
 
 #Let the scoping begin
-
-Write-Host "Scoping began at $(Get-Date)"
+$Message = "Scoping began at $(Get-Date)"
+Write-Log -Message $Message
 
 #Scope IOCs
-
-# Execute based on selected parameter set
+#Execute based on selected parameter set
 switch ($PSCmdlet.ParameterSetName) {
   "Scope-File" { $Arguments = @($File,$FileStartPath); $ScriptBlock = ${Function:Scope-File} }
   "Scope-Path" { $Arguments = @($Path); $ScriptBlock = ${Function:Scope-Path} }
@@ -564,13 +564,16 @@ switch ($PSCmdlet.ParameterSetName) {
 
 # PowerShell Remoting for the win
 try {
+
     Invoke-Command -ComputerName $Hosts -ScriptBlock $ScriptBlock -ArgumentList $Arguments -ThrottleLimit $PSThrottleLimit | Export-Csv ("{0}\{1:yyyy-MM-dd_HH-mm}_{2}.csv" -f $OutputDir, $(Get-Date), $PSCmdlet.ParameterSetName) -Append -ErrorAction Stop
+
 } catch {
+
     Write-Log -Message ("There was a problem running ScopeIOCs.ps1 using the {0} parameter" -f ($PSCmdlet.ParameterSetName -Replace '^Scope-'))
 }
 
 #End Scoping
+$Message = "Scoping ended at $(Get-Date)"
+Write-Log -Message $Message 
 
-Write-Host "Scoping ended at $(Get-Date)"
-  
 }
