@@ -25,7 +25,7 @@ This script allows for incident responders to scope specific indicators of compr
   
     Used to specify the file name that will be searched for when running the script using the Scope-File parameter set
 
-  `FileStartPath`
+  `-FileStartPath`
   
     Used to specify the starting directory that the script will use to begin searching for a file when using the Scope-File parameter
     set     
@@ -136,3 +136,29 @@ This script allows for incident responders to scope specific indicators of compr
 #### Scope a specific registry key against a host base consisting of user specified hosts
 
 `Scope-IOCs.ps1 -RegKey HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Run\EvilKey -Target "PC1,PC2,PC3,PC4,PC5" -OutputDir C:\Tools\Scoping`
+
+### Running Scope-IOCs.ps1 on a schedule
+
+#### Method 1: Create a Scheduled Task (GUI)
+
+Create a scheduled task using the following settings:
+
+1. General Settings
+
+Put in all the administrative data for your task, make sure to choose an account that will have the proper privileges to run the script against the hosts of interest
+
+2. Triggers
+
+Typically going to be based on a time interval of some sort (EX: Dialy at 12:00AM, After triggered, repeat every 30 minutes)
+
+3. Actions (Important)
+
+Action: Start a program
+
+Program/script: PowerShell.exe
+Add Arguments: `-Command "& .\Scope-IOCs.ps1 <script switches and parameters> -Output <output path>` (EX: `-Command "& .\Scope-IOCs.ps1 -TargetFile <Path to ingest file>.csv -Path <Path of IOC> -Output <Output Path>`
+Start in (optional): <Path to Scope-IOCs.ps1 install directory>
+
+### Method 2: Create-ScopingTask.ps1
+
+<details>
