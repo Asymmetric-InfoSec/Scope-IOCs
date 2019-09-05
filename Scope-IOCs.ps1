@@ -242,7 +242,7 @@ param (
 [Parameter(ParameterSetName = "Scope-Service", Position = 4, Mandatory = $false)]
 [Parameter(ParameterSetName = "Scope-LocalUsers", Position = 4, Mandatory = $false)]
 [Parameter(ParameterSetName = "Scope-RegKey", Position = 4, Mandatory = $false)]
-[Int32] $ThrottleLimit = 0
+[Int32] $PSThrottleLimit = 0
 
 )
 
@@ -267,14 +267,13 @@ function Scope-File {
     # return PSCustomObject for recording in CSV - includes path of discovered child object
     $OutHash =@{ Host = $env:COMPUTERNAME; Detected = "True"; Path = $FilePathArray}
     return [PSCustomObject]$OutHash
-    
   } else {
+
     # return PSCustomObject for recording in CSV
     $OutHash =@{ Host = $env:COMPUTERNAME; Detected = "False"; Path = $null}
     return [PSCustomObject]$OutHash
   }
 }
-
 
 # File or directory based on full path
 function Scope-Path {
@@ -287,9 +286,8 @@ function Scope-Path {
   # Append eval results to CSV
   # return PSCustomObject for recording in CSV
   $OutHash =@{ Host = $env:COMPUTERNAME; Detected = [Boolean]$PathEval}
-  return [PSCustomObject]$OutHash
-    
-  }
+  return [PSCustomObject]$OutHash    
+}
 
 # IP ADDRESSES
 function Scope-IPAddress {
@@ -299,7 +297,7 @@ function Scope-IPAddress {
   # Determine if the IP address is found on system
   $IPAddressEval = netstat -naob | Select-String -pattern ".*$IPAddress.*" | Select-Object -ExpandProperty Matches | Select-Object -ExpandProperty Value
 
-  # Determine if path is found on system
+  # Determine if IP address is found on system
   # return PSCustomObject for recording in CSV
   $OutHash =@{ Host = $env:COMPUTERNAME; Detected = [Boolean]$IPAddressEval; Details = ($IPAddressEval -Join "`n")}
   return [PSCustomObject]$OutHash
@@ -380,7 +378,7 @@ function Scope-RegKey {
 
   # Append eval results to CSV
   # return PSCustomObject for recording in CSV
-  $OutHash =@{ Host = $env:COMPUTERNAME; Detected = [Boolean]$RegKey}
+  $OutHash =@{Host = $env:COMPUTERNAME; Detected = [Boolean]$RegKey}
   return [PSCustomObject]$OutHash
     
 }
@@ -397,11 +395,11 @@ function Write-Log {
         $Date = (Get-Date).ToUniversalTime()
 
         # Build the $LogPath
-        $LogPath = '{0}\{1:yyyy-MM-dd}_Log.csv' -f $OutputDir, $Date
+        $LogPath = ('{0}\{1:yyyy-MM-dd}_Log.csv' -f $OutputDir, $Date)
 
         # Build $LogLine
         $LogLine = [PSCustomObject]@{
-            Date = '{0:u}' -f $Date
+            Date = ('{0:u}' -f $Date)
             UserName = $ENV:UserName
             Message = $Message
         }
@@ -565,11 +563,13 @@ switch ($PSCmdlet.ParameterSetName) {
 # PowerShell Remoting for the win
 try {
 
-    Invoke-Command -ComputerName $Hosts -ScriptBlock $ScriptBlock -ArgumentList $Arguments -ThrottleLimit $PSThrottleLimit | Export-Csv ("{0}\{1:yyyy-MM-dd_HH-mm}_{2}.csv" -f $OutputDir, $(Get-Date), $PSCmdlet.ParameterSetName) -Append -ErrorAction Stop
+  Invoke-Command -ComputerName $Hosts -ScriptBlock $ScriptBlock -ArgumentList $Arguments -ThrottleLimit $PSThrottleLimit | Export-Csv ("{0}\{1:yyyy-MM-dd_HH-mm}_{2}.csv" -f $OutputDir, $(Get-Date), $PSCmdlet.ParameterSetName) -Append -ErrorAction Stop
 
 } catch {
-
-    Write-Log -Message ("There was a problem running ScopeIOCs.ps1 using the {0} parameter" -f ($PSCmdlet.ParameterSetName -Replace '^Scope-'))
+    
+  $Message = "There was a problem running ScopeIOCs.ps1 using the {0} parameter" -f ($PSCmdlet.ParameterSetName -Replace '^Scope-')
+  Write-Log -Message $Message
+  Write-Warning $Message
 }
 
 #End Scoping

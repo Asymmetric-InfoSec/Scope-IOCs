@@ -18,36 +18,41 @@
 
 #>
 
-#Requires -RunAsAdministrator
-
 param (
 
-  [Parameter(Mandatory=$true)][String]$Argument,
-  [DateTime]$Date = (Get-Date).AddMinutes(5),
-  [Int32]$Interval = 30,
-  [Parameter(Mandatory=$true)][String]$UserAccount
+  [Parameter(ParameterSetName = "Setup", Position = 0, Mandatory = $true)][String]$Argument,
+  [Parameter(ParameterSetName = "Setup", Position = 1, Mandatory = $false)][PSCredential]$Credential,
+  [Parameter(ParameterSetName = "Setup", Position = 2, Mandatory = $false)][DateTime]$Date = (Get-Date).AddMinutes(5),
+  [Parameter(ParameterSetName = "Setup", Position = 3, Mandatory = $false)][Int32]$Interval = 30,
+  [Parameter(ParameterSetName = "Setup", Position = 4, Mandatory = $false)][Int32]$Duration = 30,
+  [Parameter(ParameterSetName = "Removal", Position = 0, Mandatory = $true)][Switch]$Remove
 
 )
 
 process {
 
-  $Exists = Get-ScheduledTask -TaskName 'Scope-IOCs'
+  $Exists = Get-ScheduledTask -TaskName 'Scope-IOCs' -ErrorAction SilentlyContinue
 
-  if (!$Exists){
+  if (!$Exists -and !$Remove){
 
-    $Action = New-ScheduledTaskAction -Execute "PowerShell.exe" -Argumment $Argument -WorkingDirectory $PSScriptRoot
+    if (!$Credential){
+
+      $Credential = (Get-Credential -Message 'Provide your domain credentials (Domain\Username) and password')
+    }
+
+    $Action = New-ScheduledTaskAction -Execute "PowerShell.exe" -Argument $Argument -WorkingDirectory $PSScriptRoot
 
     $IntervalTime = (New-Timespan -Minutes $Interval)
-    $Duration = ([timeSpan]::maxvalue)
-    $Trigger = New-ScheduledTaskTrigger -Once -At $Date -RepetitionInterval $IntervalTime -RepetitionDuration $Duration
+    $TaskDuration = (New-Timespan -Days $Duration)
+    $Trigger = New-ScheduledTaskTrigger -Once -At $Date -RepetitionInterval $IntervalTime -RepetitionDuration $TaskDuration
 
-    $Principal = New-ScheduledTaskPrincipal -UserId $UserAccount -LogonType Password -RunLevel Limited 
+    $Principal = New-ScheduledTaskPrincipal -UserId ($Credential.UserName) -LogonType Password -RunLevel Highest
 
-    $Settings = New-ScheduledTaskSettingsSet
+    $Settings = New-ScheduledTaskSettingsSet -StartWhenAvailable
 
     $Task = New-ScheduledTask -Action $Action -Principal $Principal -Trigger $Trigger -Settings $Settings
 
-    Register-ScheduledTask 'Scope-IOCs' -InputObject $Task
+    Register-ScheduledTask -TaskName 'Scope-IOCs' -InputObject $Task -User ($Credential.UserName) -Password ($Credential.GetNetworkCredential().Password)
 
   }
 
