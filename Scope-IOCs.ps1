@@ -380,6 +380,7 @@ function Scope-RegKey {
 
   # Append eval results to CSV
   # return PSCustomObject for recording in CSV
+
   $OutHash =@{Host = $env:COMPUTERNAME; Detected = [Boolean]$FullKeyEval; Keys = $FullKeyEval}
   return [PSCustomObject]$OutHash
 
