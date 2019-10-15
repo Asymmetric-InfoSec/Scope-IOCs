@@ -262,7 +262,7 @@ function Scope-File {
   # Append eval results to CSV
   if ($FileEvalPath){
 
-    $FilePathArray += ($FileEvalPath -Join "`n")
+    $FilePathArray = ($FileEvalPath -Join "`n")
 
     # return PSCustomObject for recording in CSV - includes path of discovered child object
     $OutHash =@{ Host = $env:COMPUTERNAME; Detected = "True"; Path = $FilePathArray}
@@ -281,7 +281,7 @@ function Scope-Path {
   param ([string]$Path)
 
   # Determine if path is found on system
-  $PathEval = Test-Path $Path
+  $PathEval = Test-Path -Path $Path
 
   # Append eval results to CSV
   # return PSCustomObject for recording in CSV
@@ -309,16 +309,15 @@ function Scope-Process {
 
   param ([string]$Process)
 
-  # Determine if the IP address is found on system
+  # Determine if the process is found on system
   $ProcessEval = Get-CimInstance -ClassName win32_process -Filter "name LIKE '$Process%'"
 
   # Determine if process is found on system
-     
-  $NameArray += ($ProcessEval.Name -Join "`n")
-  $EPArray += ($ProcessEval.ExecutablePath -Join "`n")
-  $CMDLineArray += ($ProcessEval.Commandline -Join "`n")
-  $PIDArray += ($ProcessEval.ProcessID -Join "`n")
-  $PPIDArray += ($ProcessEval.ParentProcessID -Join "`n")
+  $NameArray = ($ProcessEval.Name -Join "`n")
+  $EPArray = ($ProcessEval.ExecutablePath -Join "`n")
+  $CMDLineArray = ($ProcessEval.Commandline -Join "`n")
+  $PIDArray = ($ProcessEval.ProcessID -Join "`n")
+  $PPIDArray = ($ProcessEval.ParentProcessID -Join "`n")
 
   # return PSCustomObject for recording in CSV
   $OutHash =@{ Host = $env:COMPUTERNAME; Detected = [Boolean]$ProcessEval; Name = $NameArray; ExecutablePath = $EPArray; Commandline = $CMDLineArray; PID = $PIDArray; ParentPID = $PPIDArray }
@@ -336,13 +335,13 @@ function Scope-Service {
 
   # Determine if service is found on system
 
-  $NameArray += ($ServiceEval.Name -Join "`n")
-  $DNArray += ($ServiceEval.DisplayName -Join "`n")
-  $PIDArray += ($ServiceEval.ProcessID -Join "`n")
-  $PathArray += ($ServiceEval.PathName -Join "`n")
-  $STArray += ($ServiceEval.ServiceType -Join "`n")
-  $SMArray += ($ServiceEval.StartMode -Join "`n")
-  $StatusArray += ($ServiceEval.Status -Join "`n")
+  $NameArray = ($ServiceEval.Name -Join "`n")
+  $DNArray = ($ServiceEval.DisplayName -Join "`n")
+  $PIDArray = ($ServiceEval.ProcessID -Join "`n")
+  $PathArray = ($ServiceEval.PathName -Join "`n")
+  $STArray = ($ServiceEval.ServiceType -Join "`n")
+  $SMArray = ($ServiceEval.StartMode -Join "`n")
+  $StatusArray = ($ServiceEval.Status -Join "`n")
 
   # return PSCustomObject for recording in CSV
   $OutHash =@{ Host = $env:COMPUTERNAME; Detected = [Boolean]$ServiceEval; Name = $NameArray; DisplayName = $DNArray; PID = $PIDArray; Path = $PathArray; ServiceType = $STArray; StartMode = $SMArray; Status = $StatusArray }
@@ -359,8 +358,8 @@ function Scope-LocalUsers {
   $UserEval = Get-LocalUser -Name $User -ErrorAction SilentlyContinue
 
   # Determine if service is found on system
-  $NameArray += ($UserEval.Name -Join "`n")
-  $EnabledArray += ($UserEval.Enabled -Join "`n")
+  $NameArray = ($UserEval.Name -Join "`n")
+  $EnabledArray = ($UserEval.Enabled -Join "`n")
         
   # return PSCustomObject for recording in CSV
   $OutHash =@{ Host = $env:COMPUTERNAME; Detected = [Boolean]$UserEval; Name = $NameArray; Enabled = $EnabledArray }
@@ -373,13 +372,18 @@ function Scope-RegKey {
 
   param ([string]$RegKey)
 
+  #Mount PS Drive for processes
+  $null = New-PSDrive -Name HKU -PSProvider Registry -Root HKEY_USERS
+
   # Determine if path is found on system
-  $FullKeyEval = Test-Path $RegKey
+  $FullKeyEval = ((Get-Item -Path $RegKey).Name -Join "`n")
 
   # Append eval results to CSV
   # return PSCustomObject for recording in CSV
-  $OutHash =@{Host = $env:COMPUTERNAME; Detected = [Boolean]$RegKey}
+  $OutHash =@{Host = $env:COMPUTERNAME; Detected = [Boolean]$FullKeyEval; Keys = $FullKeyEval}
   return [PSCustomObject]$OutHash
+
+  $null = Remove-PSDrive -Name HKU -Force 
     
 }
 
@@ -554,7 +558,7 @@ switch ($PSCmdlet.ParameterSetName) {
   "Scope-File" { $Arguments = @($File,$FileStartPath); $ScriptBlock = ${Function:Scope-File} }
   "Scope-Path" { $Arguments = @($Path); $ScriptBlock = ${Function:Scope-Path} }
   "Scope-IPAddress" { $Arguments = @($IPAddress); $ScriptBlock = ${Function:Scope-IPAddress} }
-  "Scope-Process" { $Arguments = @($Process); $ScriptBlock =  ${Function:Scope-Proces} }
+  "Scope-Process" { $Arguments = @($Process); $ScriptBlock =  ${Function:Scope-Process} }
   "Scope-Service" { $Arguments = @($Service); $ScriptBlock =  ${Function:Scope-Service} }
   "Scope-LocalUsers" { $Arguments = @($UserName); $ScriptBlock = ${Function:Scope-LocalUsers} }
   "Scope-RegKey" { $Arguments = @($RegKey); $ScriptBlock = ${Function:Scope-RegKey} }
